@@ -1,0 +1,20 @@
+2026-04-07 15:19:36,528 [INFO] 加载数据 600 条，路径: /home/ai-repository/github/2026/202604/NLU/hangup_detection_600/data/hangup_detection_600.jsonl
+2026-04-07 15:19:36,529 [INFO] 正样本(挂断): 300 | 负样本(未挂断): 300
+2026-04-07 15:19:36,530 [INFO] 训练集: 480 | 验证集: 120
+2026-04-07 15:19:36,530 [INFO] 加载模型: /home/ai-repository/models/boltuix/bert-mini
+2026-04-07 15:19:37,128 [WARNING] Detected kernel version 5.4.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+2026-04-07 15:19:38,768 [INFO] 开始训练...
+2026-04-07 15:20:36,093 [INFO] 模型已保存至: ./output/fine_tuned_hangup
+2026-04-07 15:20:36,143 [INFO] 
+              precision    recall  f1-score   support
+
+         未挂断       0.73      0.88      0.80        60
+          挂断       0.85      0.67      0.75        60
+
+    accuracy                           0.78       120
+   macro avg       0.79      0.77      0.77       120
+weighted avg       0.79      0.78      0.77       120
+
+2026-04-07 15:20:36,144 [INFO] 混淆矩阵:
+[[53  7]
+ [20 40]]

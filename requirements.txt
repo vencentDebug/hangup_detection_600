@@ -1,0 +1,29 @@
+# 核心
+# 升级 PyTorch 以匹配 AutoAWQ 的推荐环境
+torch==2.6.0
+# 升级 Transformers 解决 BaseImageProcessor 导入错误及 AutoAWQ 兼容性
+transformers==4.51.3
+# 更新 tokenizers 以匹配新版 transformers
+tokenizers==0.21.0
+
+# 训练
+datasets==2.19.0
+# 保持 scikit-learn 版本，通常与 numpy 1.26 兼容
+scikit-learn==1.4.2
+pandas==2.2.2
+numpy==1.26.4
+# 升级 accelerate 以适配新版 transformers/torch
+accelerate==1.2.1
+
+# 服务
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+pydantic==2.7.1
+
+# 监控（可选）
+prometheus-fastapi-instrumentator==6.1.0
+
+# 导出 ONNX（可选）
+# 升级 ONNX 相关库以支持较新的模型架构
+onnx==1.16.0
+onnxruntime==1.17.3

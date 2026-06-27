@@ -1,0 +1,62 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+
+  # ── 推理服务日志 ──
+  - job_name: hangup_api
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: hangup_api
+          __path__: /app/logs/serve.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<time>\S+ \S+) \[(?P<level>\w+)\] (?P<logger>\S+) - (?P<message>.*)$'
+      - labels:
+          level:
+          logger:
+      - timestamp:
+          source: time
+          format: "2006-01-02 15:04:05,000"
+
+  # ── Nginx 访问日志 ──
+  - job_name: nginx_access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx_access
+          __path__: /nginx/logs/access.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<remote_addr>\S+) .* "(?P<method>\S+) (?P<path>\S+) \S+" (?P<status>\d+) .* rt=(?P<rt>\S+)$'
+      - labels:
+          method:
+          status:
+          path:
+      - metrics:
+          http_requests_total:
+            type: Counter
+            description: "Nginx HTTP 请求总数"
+            prefix: nginx_
+            source: status
+            config:
+              action: inc
+
+  # ── Nginx 错误日志 ──
+  - job_name: nginx_error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx_error
+          __path__: /nginx/logs/error.log

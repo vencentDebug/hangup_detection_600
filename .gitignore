@@ -1,0 +1,9 @@
+﻿output/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+__pycache__/
+*.pyc
+.venv/
+venv/

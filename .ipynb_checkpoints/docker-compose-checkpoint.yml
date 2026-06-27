@@ -1,0 +1,150 @@
+# version: "3.11"
+
+# ══════════════════════════════════════════════
+# 挂断检测完整部署栈
+#   - hangup-api    : FastAPI 推理服务
+#   - nginx         : 反向代理 / 限流
+#   - loki          : 日志聚合
+#   - promtail      : 日志采集
+#   - prometheus    : 指标采集
+#   - grafana       : 可视化面板
+# ══════════════════════════════════════════════
+
+services:
+
+  # ──────────────────────────────────────────
+  # 推理服务
+  # ──────────────────────────────────────────
+  hangup-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hangup-detection:latest
+    container_name: hangup-api
+    restart: unless-stopped
+    environment:
+      MODEL_DIR: /app/model
+      LOG_DIR: /app/logs
+      MAX_LENGTH: "64"
+      THRESHOLD: "0.5"
+    volumes:
+      # 挂载本地模型目录（只读）
+      - ./output/fine_tuned_hangup:/app/model:ro
+      # 日志持久化
+      - hangup_logs:/app/logs
+    ports:
+      - "38040:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    networks:
+      - hangup_net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+#   # ──────────────────────────────────────────
+#   # Nginx 反向代理
+#   # ──────────────────────────────────────────
+#   nginx:
+#     image: nginx:1.25-alpine
+#     container_name: hangup-nginx
+#     restart: unless-stopped
+#     ports:
+#       - "80:80"
+#     volumes:
+#       - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+#       - nginx_logs:/var/log/nginx
+#     depends_on:
+#       hangup-api:
+#         condition: service_healthy
+#     networks:
+#       - hangup_net
+
+#   # ──────────────────────────────────────────
+#   # Loki 日志聚合
+#   # ──────────────────────────────────────────
+#   loki:
+#     image: grafana/loki:2.9.4
+#     container_name: hangup-loki
+#     restart: unless-stopped
+#     ports:
+#       - "3100:3100"
+#     volumes:
+#       - loki_data:/loki
+#       - ./deploy/loki-config.yaml:/etc/loki/config.yaml:ro
+#     command: -config.file=/etc/loki/config.yaml
+#     networks:
+#       - hangup_net
+
+#   # ──────────────────────────────────────────
+#   # Promtail 日志采集
+#   # ──────────────────────────────────────────
+#   promtail:
+#     image: grafana/promtail:2.9.4
+#     container_name: hangup-promtail
+#     restart: unless-stopped
+#     volumes:
+#       - hangup_logs:/app/logs:ro
+#       - nginx_logs:/nginx/logs:ro
+#       - ./deploy/promtail-config.yaml:/etc/promtail/config.yaml:ro
+#     command: -config.file=/etc/promtail/config.yaml
+#     depends_on:
+#       - loki
+#     networks:
+#       - hangup_net
+
+#   # ──────────────────────────────────────────
+#   # Prometheus 指标
+#   # ──────────────────────────────────────────
+#   prometheus:
+#     image: prom/prometheus:v2.50.1
+#     container_name: hangup-prometheus
+#     restart: unless-stopped
+#     ports:
+#       - "9090:9090"
+#     volumes:
+#       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#       - prometheus_data:/prometheus
+#     networks:
+#       - hangup_net
+
+#   # ──────────────────────────────────────────
+#   # Grafana 面板
+#   # ──────────────────────────────────────────
+#   grafana:
+#     image: grafana/grafana:10.3.3
+#     container_name: hangup-grafana
+#     restart: unless-stopped
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       GF_SECURITY_ADMIN_USER: admin
+#       GF_SECURITY_ADMIN_PASSWORD: admin123
+#       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+#     volumes:
+#       - grafana_data:/var/lib/grafana
+#       - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+#     depends_on:
+#       - loki
+#       - prometheus
+#     networks:
+#       - hangup_net
+
+networks:
+  hangup_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.51.0.0/24
+
+volumes:
+  hangup_logs:
+  nginx_logs:
+  loki_data:
+  prometheus_data:
+  grafana_data:
